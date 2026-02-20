@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Social Security Tax Calculator</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<div class="page">
+		<header>
+			<h1>Social Security Analyzer</h1>
+			<div class="subtitle">
+				<p><strong>This tool analzyze your Social Security earnings record to help you</strong></p>
+				<ul>
+					<li>Estimate your payments at retirement</li>
+					<li>Decide the best age to start taking Social Security</li>
+					<li>Understand how your taxes would have performed in a hypothetical investment account</li>
+				</ul>
+				<p><strong>Any data you enter here remains 100% private.</strong> All processing is done in your browser; nothing is uploaded to the server.</p>
+				<p><strong>The benefit calculations are currently not quite right; I'm working on them.</strong></p>
+			</div>
+		</header>
+
+		<section class="panel panel--reports is-hidden" id="reportsPanel">
+			<h2>Social Security</h2>
+			<div>
+				<div class="results results--row">
+					<div class="stat-column">
+						<div class="stat stat--npv" tabindex="0">
+							<h3>Net Present Value</h3>
+							<p id="overviewNetPresentValue">--</p>
+							<div class="stat-tooltip" role="tooltip">
+								The current Net Present value of your current Social Security entitlement. Uses the NPV Discount and COLA Benefit on the Assumptions.
+							</div>
+						</div>
+					</div>
+					<div class="stat stat--startyear">
+						<h3>Starting Year</h3>
+						<p id="overviewStartingYear">--</p>
+						<div class="stat-tooltip" role="tooltip">
+							The first year in which you receive SS benefits.
+						</div>
+					</div>
+					<div class="stat stat--savings">
+						<h3>Savings Alternative</h3>
+						<p id="overviewSavingsBalance">--</p>
+						<div class="stat-tooltip" role="tooltip">
+							Current balance of a hypothetical savings account in which your SS payroll taxes were instead invested. The interest rate for the account is set on the Assumptions tab.
+						</div>
+					</div>
+					<div class="stat stat--monthly">
+						<h3>Monthly Benefit</h3>
+						<p id="overviewMonthlyBenefit">--</p>
+						<div class="stat-tooltip" role="tooltip">
+							The amount of SS you will receive each month (in 2026 dollars).
+						</div>
+					</div>
+					<div class="stat stat--annual">
+						<h3>Annual Benefit</h3>
+						<p id="overviewAnnualBenefit">--</p>
+						<div class="stat-tooltip" role="tooltip">
+							The amount of SS you will receive each year (in 2026 dollars).
+						</div>
+					</div>
+					<div class="stat stat--investment" tabindex="0">
+						<h3>Investment Alternative</h3>
+						<p id="overviewInvestmentBalance">--</p>
+						<div class="stat-tooltip" role="tooltip">
+							Current balance of a hypothetical investment account in which your SS payroll taxes were invested in the S&P 500. Balances for past years are based on actual S&P performance; future years use the S&P Returns percentage on the assumptions tab.
+						</div>
+					</div>
+				</div>
+				<canvas id="investmentChart" width="900" height="220" style="width: 100%; height: 220px; max-height: 220px;" aria-label="Investment balance chart" role="img"></canvas>
+				<div class="input-row">
+					<select id="opportunityRange" class="select-standard" data-default="to-date">
+						<option value="to-date" selected>To Date</option>
+						<option value="lifetime">Lifetime</option>
+					</select>
+				</div>
+				
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="tabs" role="tablist" aria-label="Inputs" data-tab-group="inputs">
+				<button class="tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="tab-earnings" id="tab-earnings-btn" data-tab="earnings" data-tab-group="inputs">Data Input</button>
+				<button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-assumptions" id="tab-assumptions-btn" data-tab="assumptions" data-tab-group="inputs">Assumptions</button>
+				<button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-earnings-record" id="tab-earnings-record-btn" data-tab="earnings-record" data-tab-group="inputs">Earnings Record</button>
+			</div>
+			<div class="tab-panel is-active" role="tabpanel" id="tab-earnings" aria-labelledby="tab-earnings-btn" data-tab-group="inputs">
+				<table class="assumptions-table">
+					<tbody>
+						<tr class="no-border-bottom">
+							<th><label for="earningsSource">Method</label></th>
+							<td>
+								<div class="input-row">
+									<select id="earningsSource" class="select-standard earnings-source-select" data-default="estimate">
+										<option value="estimate" selected>Estimate Past Earnings</option>
+										<option value="import">Import Social Security Record</option>
+										<option value="manual">Enter Earnings Manually</option>
+									</select>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="entry-panel" id="entry-estimate">
+					<p class="import-help">Use this form to estimate your past and future earnings based on your current salary.  For more accurate results, select 'Import Social Security Record' from the dropdown above.</p>
+					<table class="assumptions-table">
+						<tbody>
+							<tr>
+								<th><label for="currentIncome">Current Income</label></th>
+								<td>
+									<div class="input-row">
+										<input id="currentIncome" class="salary-input" type="text" value="60000" inputmode="numeric" pattern="[0-9,]*">
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<th><label>Working Years</label></th>
+								<td>
+									<div class="input-row">
+										<select id="firstYearWorking" data-default="1996"></select>
+										<span class="input-suffix">to</span>
+										<select id="lastYearWorking" data-default="2026"></select>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<th><label for="annualRaises">Annual raises</label></th>
+								<td>
+									<div class="input-row">
+										<input id="annualRaises" type="number" min="0" max="20" step="0.1" value="3">
+										<span class="input-suffix">%</span>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<th></th>
+								<td>
+									<button class="action-button" type="button" id="estimateCalculate">Generate</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="entry-panel" id="entry-import">
+					<label for="xmlUpload" class="import-help">Provide the XML file containing your social security earnings record. Again, the file will NOT uploaded to the server.</label>
+
+			<label for="xmlUpload" class="import-help">If you don't have this file, you can follow the instructions below to download it from ssa.gov.</label>
+
+			<input id="xmlUpload" class="file-input" type="file" accept=".xml,text/xml,application/xml">
+					<div class="import-instructions" aria-live="polite">
+						<h2>Instructions: Download SSA Earnings Record (XML)</h2>
+						<p>Follow these steps to create your account and download your raw data for financial planning.</p>
+						<div class="step-box">
+							<h3>Step 1: Create Your Identity Account</h3>
+							<p>The SSA uses <strong>Login.gov</strong> or <strong>ID.me</strong> for secure access. You must verify your identity before you can see your data.</p>
+							<ul>
+								<li>Go to the <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">SSA my Social Security</a> portal.</li>
+								<li>Click <strong>"Create an Account."</strong></li>
+								<li>Follow the prompts to verify your identity. You will need your Social Security Number, a mailing address, and a <strong>valid State ID or Driver's License</strong>.</li>
+							</ul>
+						</div>
+						<div class="step-box">
+							<h3>Step 2: Access Your Dashboard</h3>
+							<p>Once your account is verified and you are logged in:</p>
+							<ul>
+								<li>Navigate to the main <strong>"My Home"</strong> or <strong>"Eligibility and Earnings"</strong> tab.</li>
+								<li>Look for the link labeled <strong>"Review Your Full Earnings Record Now"</strong> or <strong>"Your Social Security Statement."</strong></li>
+							</ul>
+						</div>
+						<div class="step-box">
+							<h3>Step 3: Download the XML Data</h3>
+							<p>To get the machine-readable version (not the PDF):</p>
+							<ul>
+								<li>Locate the link that says <strong>"Download Your Statement Data"</strong> or <strong>"Download XML."</strong></li>
+								<li>The file will download with a <code>.xml</code> extension.</li>
+								<li><strong>Save it locally:</strong> This file is intended for use in retirement software or spreadsheets.</li>
+							</ul>
+						</div>
+						<div class="warning import-warning">
+							<h3>Important Privacy Note</h3>
+							<p>This XML file contains your <strong>full earnings history and personal identity details</strong>. Do not download this on a public computer and ensure it is stored in a password-protected folder.</p>
+						</div>
+					</div>
+				</div>
+				<div class="entry-panel" id="entry-manual" hidden>
+					<p class="status">Edit the date in the Earnings Record tab manually</p>
+				</div>
+			</div>
+			<div class="tab-panel" role="tabpanel" id="tab-assumptions" aria-labelledby="tab-assumptions-btn" data-tab-group="inputs" hidden>
+				<table class="assumptions-table">
+					<tbody>
+						<tr>
+							<th><label for="currentAge">Your Current Age</label></th>
+							<td>
+								<div class="input-row">
+									<select id="currentAge" data-default="40"></select>
+								</div>
+							</td>
+							<th><label for="futureReturns">Future S&P 500 Returns</label></th>
+							<td>
+								<div class="input-row">
+									<select id="futureReturns" data-default="7"></select>
+									<span class="input-suffix">%</span>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="retirementAge">Age when you will (or did) stop working</label></th>
+							<td>
+								<div class="input-row">
+									<select id="retirementAge" data-default="65"></select>
+								</div>
+							</td>
+							<th><label for="savingsRate">Savings Returns</label></th>
+							<td>
+								<div class="input-row">
+									<select id="savingsRate" data-default="3"></select>
+									<span class="input-suffix">%</span>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="retireAge">Age when you will start social security</label></th>
+							<td>
+								<div class="input-row">
+									<select id="retireAge" data-default="65"></select>
+								</div>
+							</td>
+							<th><label for="npvDiscountRate">NPV Discount Rate</label></th>
+							<td>
+								<div class="input-row">
+									<select id="npvDiscountRate" data-default="3"></select>
+									<span class="input-suffix">%</span>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="lifeExpectancy">Life Expectancy</label></th>
+							<td>
+								<div class="input-row">
+									<select id="lifeExpectancy" data-default="85"></select>
+								</div>
+							</td>
+							<th><label for="benefitCola">Benefit COLA</label></th>
+							<td>
+								<div class="input-row">
+									<select id="benefitCola" data-default="2"></select>
+									<span class="input-suffix">%</span>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="tab-panel" role="tabpanel" id="tab-earnings-record" aria-labelledby="tab-earnings-record-btn" data-tab-group="inputs" hidden>
+				<!-- Moved AIME and PIA here (previously in the reports panel). -->
+				<div class="results results--row earnings-record-stats">
+					<div class="stat">
+						<h3>AIME</h3>
+						<p id="overviewAime">--</p>
+					</div>
+					<div class="stat stat--pia">
+						<h3>PIA</h3>
+						<p id="overviewPia">--</p>
+					</div>
+				</div>
+				<p class="status" id="statusText"></p>
+				<div class="table-wrap">
+					<table class="earnings-table">
+						<thead>
+							<tr>
+								<th>Year</th>
+								<th>Social Security Earnings</th>
+								<th>Medicare Earnings</th>
+								<th>Gross Income</th>
+								<th>Social Security Tax</th>
+								<th>Medicare Tax</th>
+							</tr>
+						</thead>
+						<tbody id="earningsTableBody"></tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+	<script src="myss.js"></script>
+	<script>
+		window.addEventListener('DOMContentLoaded', () => {
+			if (window.myss && typeof window.myss.init === 'function') {
+				try {
+					window.myss.init()
+				} catch (err) {
+					console.error('myss.init failed', err)
+				}
+			} else {
+				console.error('myss.init not available')
+			}
+		})
+	</script>
+</body>
+</html>
