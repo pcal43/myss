@@ -1423,6 +1423,11 @@ function initUI() {
 	retireAgeSelect?.addEventListener("change", refreshProjection)
 	opportunityRangeSelect?.addEventListener("change", refreshProjection)
 
+	// Also listen for any changes inside the assumptions tab (covers selects/inputs added later)
+	const assumptionsPanel = document.getElementById("tab-assumptions")
+	assumptionsPanel?.addEventListener("change", refreshProjection)
+	assumptionsPanel?.addEventListener("input", refreshProjection)
+
 	earningsTableBody?.addEventListener("input", (event) => {
 		if (!(event.target instanceof HTMLInputElement)) {
 			return
