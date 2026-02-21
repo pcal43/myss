@@ -839,12 +839,12 @@ function initUI() {
 	// make available to rest of module
 	myss._ssa = { bendPoints: SSA_BEND_POINTS, awi: SSA_AWI, cola: SSA_COLA }
 
-	const populateAgeSelect = (select, defaultValue) => {
+	const populateAgeSelect = (select, defaultValue, minAge = 15, maxAge = 100) => {
 		if (!select) {
 			return
 		}
 		const selectedValue = Number(defaultValue)
-		for (let age = 15; age <= 100; age += 1) {
+		for (let age = Number(minAge); age <= Number(maxAge); age += 1) {
 			const option = document.createElement("option")
 			option.value = String(age)
 			option.textContent = String(age)
@@ -888,10 +888,11 @@ function initUI() {
 		}
 	}
 
-	populateAgeSelect(document.getElementById("currentAge"), 40)
-	populateAgeSelect(document.getElementById("retirementAge"), 65)
-	populateAgeSelect(document.getElementById("retireAge"), 65)
-	populateAgeSelect(document.getElementById("lifeExpectancy"), 85)
+		populateAgeSelect(document.getElementById("currentAge"), 40)
+		populateAgeSelect(document.getElementById("retirementAge"), 65)
+		// limit retireAge to typical SSA claim ages 62..70
+		populateAgeSelect(document.getElementById("retireAge"), 65, 62, 70)
+		populateAgeSelect(document.getElementById("lifeExpectancy"), 85)
 	populatePercentSelect(document.getElementById("futureReturns"), 0, 15, 7)
 	populatePercentSelect(document.getElementById("npvDiscountRate"), 0, 10, 3)
 	populatePercentSelect(document.getElementById("benefitCola"), 0, 5, 2)
